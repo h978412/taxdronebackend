@@ -6,11 +6,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Passport\HasApiTokens;
+use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\HasApiTokens;
+
 
 class User extends Authenticatable
 {
-    use HasApiTokens,HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -45,4 +47,74 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public static function register($request)
+    {
+        try {
+            $postData = $request->all();
+
+
+            $email = $postData['email'];
+            $password = $postData['password'];
+            $name = $postData['name'];
+
+            $user = self::where('email',$email)->first();
+
+            if(!empty($user)){
+                throw new \Exception("This email already exists");
+            }
+
+            $encPassword = Hash::make($password);
+
+            $data = [
+                'email' => $email,
+                'password' => $encPassword,
+                'name' => $name
+            ];
+
+            $user = self::create($data);
+
+            $token = $user->createToken("desktop")->plainTextToken;
+
+            return $token;
+
+
+        } catch (\Exception $ex) {
+            throw new \Exception($ex->getMessage());
+        }
+    }
+
+    public static function login($email, $password)
+    {
+        try {
+            $user = self::where('email', $email)->first();
+
+            if (empty($user)) {
+                throw new \Exception("This email is not registered with us");
+            }
+
+            if (!Hash::check($password, $user->password)) {
+                throw new \Exception("Invalid Credentials, kindly try again");
+            }
+
+            $token = $user->createToken("desktop")->plainTextToken;
+
+            return $token;
+
+        } catch (\Exception $ex) {
+            throw new \Exception($ex->getMessage());
+        }
+
+    }
+
+
+    public function logout($email){
+        try{
+
+        }catch(\Exception $ex){
+            throw new \Exception($ex->getMessage());
+        }
+    }
+
+
 }

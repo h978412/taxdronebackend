@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class PlanHighlights extends Model
 {
     use HasFactory;
+    public $timestamps = false;
+
 
     public static function getHighlightForPlan($planId){
         try{
